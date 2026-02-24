@@ -26,7 +26,6 @@
       min-height: 100vh;
     }
 
-    /* ── MASTHEAD ── */
     header {
       border-bottom: 3px double var(--ink);
       padding: 2rem 2rem 1.2rem;
@@ -67,7 +66,6 @@
       width: 60%;
     }
 
-    /* ── DATE SEARCH ── */
     .search-section {
       max-width: 680px;
       margin: 3rem auto 2rem;
@@ -118,7 +116,6 @@
       text-transform: uppercase;
       cursor: pointer;
       transition: background 0.15s;
-      white-space: nowrap;
     }
 
     .date-form button:hover { background: var(--accent); }
@@ -146,13 +143,16 @@
       user-select: none;
     }
 
-    .pill.active, .pill:hover {
+    .pill.active {
       background: var(--ink);
       color: var(--paper);
       border-color: var(--ink);
     }
 
-    /* ── DIVIDER ── */
+    .pill:not(.active) {
+      opacity: 0.5;
+    }
+
     .divider {
       display: flex;
       align-items: center;
@@ -173,7 +173,6 @@
       background: var(--rule);
     }
 
-    /* ── RESULTS ── */
     #results {
       max-width: 900px;
       margin: 0 auto 4rem;
@@ -241,7 +240,6 @@
       white-space: nowrap;
     }
 
-    /* ── STATES ── */
     .state-msg {
       text-align: center;
       padding: 3rem 1rem;
@@ -274,15 +272,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .error-msg {
-      color: var(--accent);
-      text-align: center;
-      font-family: 'Source Code Pro', monospace;
-      font-size: 0.8rem;
-      padding: 2rem;
-    }
-
-    /* ── FOOTER ── */
     footer {
       border-top: 3px double var(--ink);
       padding: 1.2rem 2rem;
@@ -295,21 +284,16 @@
     }
 
     @media (max-width: 500px) {
-      .date-form { flex-direction: column; box-shadow: 3px 3px 0 var(--ink); }
-      .date-form button { padding: 0.75rem; }
+      .date-form { flex-direction: column; }
     }
     .back-link {
-  font-family: 'Source Code Pro', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--muted);
-  text-decoration: none;
-  margin-top: 0.6rem;
-  display: inline-block;
-}
-
-.back-link:hover { color: var(--accent); }
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.7rem;
+      text-decoration: none;
+      color: var(--muted);
+      margin-top: 0.6rem;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
@@ -342,7 +326,7 @@
     <section id="results">
       <div class="state-msg">
         <span class="big">Choose a date</span>
-        <span class="small">Articles from the New York Times, The Guardian,<br>and the Library of Congress will appear here</span>
+        <span class="small">Articles from the New York Times, The Guardian, and the Library of Congress will appear here</span>
       </div>
     </section>
   </main>
@@ -352,30 +336,15 @@
   </footer>
 
   <script>
-    // ── API KEYS ──────────────────────────────────────────────
-    // Replace these with your real keys before deploying
-    const NYT_API_KEY     = 'daUUHflQZcuAQRGdSKta81ygH4T4TUoSGa2fkxeGqgFcDmEE';
     const GUARDIAN_API_KEY = '7a2fb983-1153-49a9-906b-137863711dec';
-    // Chronicling America requires no key
-    // ─────────────────────────────────────────────────────────
 
-    // Track which sources are toggled on
-    const activeSources = new Set(['nyt', 'guardian', 'loc']);
-
+    // ── PILL INTERACTION ──────────────────────────────────────
     document.querySelectorAll('.pill').forEach(pill => {
       pill.addEventListener('click', () => {
-        const src = pill.dataset.src;
-        if (activeSources.has(src)) {
-          activeSources.delete(src);
-          pill.classList.remove('active');
-        } else {
-          activeSources.add(src);
-          pill.classList.add('active');
-        }
+        pill.classList.toggle('active');
       });
     });
 
-    // Allow pressing Enter in the date field
     document.getElementById('dateInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') fetchArticles();
     });
@@ -392,48 +361,44 @@
       showLoading();
 
       const fetchers = [];
-      if (activeSources.has('nyt'))      fetchers.push(fetchNYT(year, month));
-      if (activeSources.has('guardian')) fetchers.push(fetchGuardian(raw));
-      if (activeSources.has('loc'))      fetchers.push(fetchLOC(year, month, day));
+      const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.src);
+
+      if (activePills.includes('nyt'))      fetchers.push(fetchNYT(year, month, raw));
+      if (activePills.includes('guardian')) fetchers.push(fetchGuardian(raw));
+      if (activePills.includes('loc'))      fetchers.push(fetchLOC(raw));
+
+      if (fetchers.length === 0) {
+        document.getElementById('results').innerHTML = `<div class="state-msg"><span class="big">No sources selected</span></div>`;
+        return;
+      }
 
       const results = await Promise.allSettled(fetchers);
-      renderResults(results.map(r => r.status === 'fulfilled' ? r.value : null), year, month, day, displayDate);
+      const cleanData = results.map(r => r.status === 'fulfilled' ? r.value : null);
+      
+      renderResults(cleanData, displayDate);
     }
 
     // ── NYT Archive API ──────────────────────────────────────
-    // Returns all articles for a given month; we filter to the exact day
-    async function fetchNYT(year, month) {
-  // We fetch the whole month from your worker
-  const url = `https://past.liamtian7.workers.dev/?source=nyt&date=${year}-${String(month).padStart(2,'0')}-01`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('NYT request failed');
-  const data = await res.json();
-
-  // 1. Get the day the user selected from the input field
-  const selectedDate = document.getElementById('dateInput').value; // e.g., "1922-12-01"
-
-  // 2. NYT data lives in data.response.docs
-  // 3. We filter the month's results to only show the chosen day
-  const articles = (data.response?.docs || [])
-    .filter(doc => {
-      // NYT pub_date looks like "1922-12-01T05:00:00+0000"
-      // We check if it starts with your "YYYY-MM-DD" string
-      return doc.pub_date && doc.pub_date.startsWith(selectedDate);
-    })
-    .map(a => ({
-      title: a.headline?.main || 'Untitled Article',
-      url: a.web_url,
-      section: a.section_name || 'General News'
-    }));
-
-  return { source: 'The New York Times', articles };
-}
+    async function fetchNYT(year, month, fullDate) {
+      const url = `https://past.liamtian7.workers.dev/?source=nyt&date=${year}-${String(month).padStart(2,'0')}-01`;
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      const articles = (data.response?.docs || [])
+        .filter(doc => doc.pub_date && doc.pub_date.includes(fullDate))
+        .map(a => ({
+          title: a.headline?.main || 'Untitled Archive Piece',
+          url: a.web_url,
+          section: a.section_name || 'News',
+        }));
+      
+      return { source: 'The New York Times', articles };
+    }
 
     // ── Guardian API ─────────────────────────────────────────
     async function fetchGuardian(dateStr) {
       const url = `https://content.guardianapis.com/search?from-date=${dateStr}&to-date=${dateStr}&page-size=15&api-key=${GUARDIAN_API_KEY}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Guardian request failed');
       const data = await res.json();
       const articles = (data.response?.results || []).map(a => ({
         title: a.webTitle,
@@ -444,69 +409,49 @@
     }
 
     // ── Chronicling America (LOC) ────────────────────────────
-    // Free, no key required. Works best for dates before ~1963.
-    async function fetchLOC(year, month, day) {
-  const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
-  
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('LOC request failed');
-  const data = await res.json();
-  
-  // FIX: Look for 'items', not 'results'
-  // FIX: Use 'id' for the link and 'city' for the section info
-  const articles = (data.items || []).map(a => ({
-    title: a.title || 'Historical Newspaper Page',
-    url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
-    section: a.city ? a.city.join(', ') : 'Archive'
-  }));
+    async function fetchLOC(dateStr) {
+      const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      const articles = (data.items || []).map(a => ({
+        title: a.title || 'Historical Page',
+        url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
+        section: a.city ? a.city.join(', ') : 'Archive',
+      }));
+      return { source: 'Chronicling America (LOC)', articles };
+    }
 
-  return { source: 'Chronicling America (LOC)', articles };
-}
-
-    // ── Render ───────────────────────────────────────────────
-    function renderResults(groups, year, month, day, displayDate) {
+    // ── Render Results ───────────────────────────────────────
+    function renderResults(groups, displayDate) {
       const el = document.getElementById('results');
       const validGroups = groups.filter(g => g && g.articles.length > 0);
 
       if (validGroups.length === 0) {
-        el.innerHTML = `
-          <div class="state-msg">
-            <span class="big">No results found</span>
-            <span class="small">Try a different date, or check that your API keys are configured</span>
-          </div>`;
+        el.innerHTML = `<div class="state-msg"><span class="big">No results found</span><span class="small">Try a different date or different sources.</span></div>`;
         return;
       }
 
       let html = `<p class="results-date-header">Articles from ${displayDate}</p>`;
-
       for (const group of validGroups) {
-        html += `
-          <div class="source-group">
-            <p class="source-name">${group.source}</p>
-            <div class="article-list">`;
+        html += `<div class="source-group"><p class="source-name">${group.source}</p><div class="article-list">`;
         for (const art of group.articles) {
-          html += `
-              <a class="article-item" href="${art.url}" target="_blank" rel="noopener">
-                <span class="article-title">${escHtml(art.title)}</span>
-                <span class="article-section">${escHtml(art.section)}</span>
-              </a>`;
+          html += `<a class="article-item" href="${art.url}" target="_blank" rel="noopener">
+                    <span class="article-title">${escHtml(art.title)}</span>
+                    <span class="article-section">${escHtml(art.section)}</span>
+                  </a>`;
         }
         html += `</div></div>`;
       }
-
       el.innerHTML = html;
     }
 
     function showLoading() {
-      document.getElementById('results').innerHTML = `
-        <div class="state-msg">
-          <div class="spinner"></div>
-          <span class="small">Searching the archives…</span>
-        </div>`;
+      document.getElementById('results').innerHTML = `<div class="state-msg"><div class="spinner"></div><span class="small">Searching the archives…</span></div>`;
     }
 
     function escHtml(str) {
+      if (!str) return '';
       return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
   </script>
