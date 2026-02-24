@@ -336,7 +336,6 @@
   </footer>
 
   <script>
-    const GUARDIAN_API_KEY = '7a2fb983-1153-49a9-906b-137863711dec';
 
     // ── PILL INTERACTION ──────────────────────────────────────
     document.querySelectorAll('.pill').forEach(pill => {
@@ -395,16 +394,20 @@
 
     // ── Guardian API ─────────────────────────────────────────
     async function fetchGuardian(dateStr) {
-      const url = `https://content.guardianapis.com/search?from-date=${dateStr}&to-date=${dateStr}&page-size=15&api-key=${GUARDIAN_API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const articles = (data.response?.results || []).map(a => ({
-        title: a.webTitle,
-        url: a.webUrl,
-        section: a.sectionName || '',
-      }));
-      return { source: 'The Guardian', articles };
-    }
+  // We call the Worker instead of calling The Guardian directly
+  const url = `https://past.liamtian7.workers.dev/?source=guardian&date=${dateStr}`;
+  
+  const res = await fetch(url);
+  const data = await res.json();
+  
+  const articles = (data.response?.results || []).map(a => ({
+    title: a.webTitle,
+    url: a.webUrl,
+    section: a.sectionName || 'News',
+  }));
+  
+  return { source: 'The Guardian', articles };
+}
 
     // ── Chronicling America (LOC) ────────────────────────────
     async function fetchLOC(year, month, day) {
