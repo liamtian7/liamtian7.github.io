@@ -440,11 +440,11 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error('LOC request failed');
       const data = await res.json();
-      const articles = (data.items || []).map(a => ({
-        title: a.title || 'Untitled Page',
-        url: `https://chroniclingamerica.loc.gov${a.id}`,
-        section: a.place_of_publication?.[0] || '',
-      }));
+      const articles = (data.results || []).map(a => ({
+  title: a.title || 'Untitled Page',
+  url: a.url || a.id,
+  section: a.partof?.[0]?.title || '',
+}));
       return { source: 'Chronicling America (LOC)', articles };
     }
 
