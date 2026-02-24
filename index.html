@@ -403,20 +403,19 @@
     // ── NYT Archive API ──────────────────────────────────────
     // Returns all articles for a given month; we filter to the exact day
     async function fetchNYT(year, month) {
-      const url = `https://past.liamtian7.workers.dev/?source=nyt&date=${year}-${String(month).padStart(2,'0')}-01`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('NYT request failed');
-      const data = await res.json();
-      const dayStr = String(year) + '-' + String(month).padStart(2,'0');
-
-      const articles = (data.results || []).map(a => ({
-  title: a.title || 'Untitled Page',
-  url: a.url || a.id,
-  section: a.partof?.[0]?.title || '',
-}));
-      
-      return { source: 'The New York Times', articles };
-    }
+  const url = `https://past.liamtian7.workers.dev/?source=nyt&date=${year}-${String(month).padStart(2,'0')}-01`;
+  const res = await fetch(url);
+  const data = await res.json();
+  
+  // FIX: NYT Archive API uses response.docs
+  const articles = (data.response?.docs || []).map(a => ({
+    title: a.headline.main || 'Untitled',
+    url: a.web_url,
+    section: a.section_name || '',
+  }));
+  
+  return { source: 'The New York Times', articles };
+}
 
     // ── Guardian API ─────────────────────────────────────────
     async function fetchGuardian(dateStr) {
@@ -435,18 +434,19 @@
     // ── Chronicling America (LOC) ────────────────────────────
     // Free, no key required. Works best for dates before ~1963.
     async function fetchLOC(year, month, day) {
-      const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const url = `https://past.liamtian7.workers.dev/?source=loc&date=${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('LOC request failed');
-      const data = await res.json();
-      const articles = (data.results || []).map(a => ({
-  title: a.title || 'Untitled Page',
-  url: a.url || a.id,
-  section: a.partof?.[0]?.title || '',
-}));
-      return { source: 'Chronicling America (LOC)', articles };
-    }
+  const url = `https://past.liamtian7.workers.dev/?source=loc&date=${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  
+  // FIX: LOC uses .items
+  const articles = (data.items || []).map(a => ({
+    title: a.title || 'Untitled Page',
+    url: `https://www.loc.gov${a.id}`,
+    section: a.county ? a.county.join(', ') : '',
+  }));
+  
+  return { source: 'Chronicling America (LOC)', articles };
+}
 
     // ── Render ───────────────────────────────────────────────
     function renderResults(groups, year, month, day, displayDate) {
