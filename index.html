@@ -350,10 +350,9 @@
     });
 
     async function fetchArticles() {
-  const raw = document.getElementById('dateInput').value;
+  const raw = document.getElementById('dateInput').value; // e.g. "1922-12-01"
   if (!raw) { alert('Please pick a date first.'); return; }
 
-  // 1. Properly split the date into parts
   const [year, month, day] = raw.split('-').map(Number);
   
   const displayDate = new Date(year, month - 1, day)
@@ -365,21 +364,12 @@
   const fetchers = [];
   const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.src);
 
-  // 2. Pass year/month/day individually to ensure LOC gets YYYY-MM-DD
   if (activePills.includes('nyt'))      fetchers.push(fetchNYT(year, month, raw));
   if (activePills.includes('guardian')) fetchers.push(fetchGuardian(raw));
+  
+  // FIX: Make sure all three variables are passed here
   if (activePills.includes('loc'))      fetchers.push(fetchLOC(year, month, day));
 
-  if (fetchers.length === 0) {
-    document.getElementById('results').innerHTML = `
-      <div class="state-msg">
-        <span class="big">No sources selected</span>
-        <span class="small">Click the buttons above to select news sources.</span>
-      </div>`;
-    return;
-  }
-
-  // 3. Wait for all selected sources and render
   const results = await Promise.allSettled(fetchers);
   const cleanData = results.map(r => r.status === 'fulfilled' ? r.value : null);
   
@@ -418,7 +408,7 @@
 
     // ── Chronicling America (LOC) ────────────────────────────
     async function fetchLOC(year, month, day) {
-  // This ensures the date is ALWAYS YYYY-MM-DD (e.g., 1922-01-01)
+  // This ensures 1922-1-1 becomes 1922-01-01
   const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   
   const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
@@ -430,6 +420,7 @@
     url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
     section: a.city ? a.city.join(', ') : 'Archive',
   }));
+  
   return { source: 'Chronicling America (LOC)', articles };
 }
 
