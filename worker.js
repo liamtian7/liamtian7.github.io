@@ -8,15 +8,15 @@ export default {
     const GUARDIAN_KEY = '7a2fb983-1153-49a9-906b-137863711dec';
 
     let apiUrl;
+
     if (source === 'nyt') {
       const [year, month] = date.split('-');
       apiUrl = `https://api.nytimes.com/svc/archive/v1/${year}/${month}.json?api-key=${NYT_KEY}`;
     } else if (source === 'guardian') {
       apiUrl = `https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}`;
-    } 
-  } else if (source === 'loc') {
-  apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=${date}&searchType=advanced&start_date=${date}&fo=json`;
-}
+    } else if (source === 'loc') {
+      apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=${date}&searchType=advanced&start_date=${date}&fo=json`;
+    }
 
     try {
       const response = await fetch(apiUrl);
