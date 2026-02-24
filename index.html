@@ -403,17 +403,29 @@
     // ── NYT Archive API ──────────────────────────────────────
     // Returns all articles for a given month; we filter to the exact day
     async function fetchNYT(year, month) {
+  // We fetch the whole month from your worker
   const url = `https://past.liamtian7.workers.dev/?source=nyt&date=${year}-${String(month).padStart(2,'0')}-01`;
   const res = await fetch(url);
+  if (!res.ok) throw new Error('NYT request failed');
   const data = await res.json();
-  
-  // FIX: NYT Archive API uses response.docs
-  const articles = (data.response?.docs || []).map(a => ({
-    title: a.headline.main || 'Untitled',
-    url: a.web_url,
-    section: a.section_name || '',
-  }));
-  
+
+  // 1. Get the day the user selected from the input field
+  const selectedDate = document.getElementById('dateInput').value; // e.g., "1922-12-01"
+
+  // 2. NYT data lives in data.response.docs
+  // 3. We filter the month's results to only show the chosen day
+  const articles = (data.response?.docs || [])
+    .filter(doc => {
+      // NYT pub_date looks like "1922-12-01T05:00:00+0000"
+      // We check if it starts with your "YYYY-MM-DD" string
+      return doc.pub_date && doc.pub_date.startsWith(selectedDate);
+    })
+    .map(a => ({
+      title: a.headline?.main || 'Untitled Article',
+      url: a.web_url,
+      section: a.section_name || 'General News'
+    }));
+
   return { source: 'The New York Times', articles };
 }
 
