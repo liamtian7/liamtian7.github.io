@@ -15,7 +15,7 @@ export default {
     } else if (source === 'guardian') {
       apiUrl = `https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}`;
     } else if (source === 'loc') {
-      apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=${date}&searchType=advanced&start_date=${date}&fo=json`;
+      apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=1922-12-31&searchType=advanced&start_date=1922-12-01&fo=json`;
     }
 
     try {
