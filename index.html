@@ -466,44 +466,37 @@
 
     // ── Render ───────────────────────────────────────────────
     function renderResults(groups, year, month, day, displayDate) {
-  const el = document.getElementById('results');
-  
-  // 1. Filter out nulls or sources with 0 articles
-  const validGroups = groups.filter(g => g && g.articles && g.articles.length > 0);
+      const el = document.getElementById('results');
+      const validGroups = groups.filter(g => g && g.articles.length > 0);
 
-  // 2. If nothing was found across ALL sources, show the empty state
-  if (validGroups.length === 0) {
-    el.innerHTML = `
-      <div class="state-msg">
-        <span class="big">No results found</span>
-        <span class="small">Try a different date, or check your connection</span>
-      </div>`;
-    return;
-  }
+      if (validGroups.length === 0) {
+        el.innerHTML = `
+          <div class="state-msg">
+            <span class="big">No results found</span>
+            <span class="small">Try a different date, or check that your API keys are configured</span>
+          </div>`;
+        return;
+      }
 
-  // 3. Start with the date header (ONLY once)
-  let combinedHtml = `<p class="results-date-header">Articles from ${displayDate}</p>`;
+      let html = `<p class="results-date-header">Articles from ${displayDate}</p>`;
 
-  // 4. Loop through EVERY valid group and add it to the same string
-  for (const group of validGroups) {
-    combinedHtml += `
-      <div class="source-group">
-        <p class="source-name">${group.source}</p>
-        <div class="article-list">`;
-    
-    for (const art of group.articles) {
-      combinedHtml += `
-          <a class="article-item" href="${art.url}" target="_blank" rel="noopener">
-            <span class="article-title">${escHtml(art.title)}</span>
-            <span class="article-section">${escHtml(art.section)}</span>
-          </a>`;
+      for (const group of validGroups) {
+        html += `
+          <div class="source-group">
+            <p class="source-name">${group.source}</p>
+            <div class="article-list">`;
+        for (const art of group.articles) {
+          html += `
+              <a class="article-item" href="${art.url}" target="_blank" rel="noopener">
+                <span class="article-title">${escHtml(art.title)}</span>
+                <span class="article-section">${escHtml(art.section)}</span>
+              </a>`;
+        }
+        html += `</div></div>`;
+      }
+
+      el.innerHTML = html;
     }
-    combinedHtml += `</div></div>`;
-  }
-
-  // 5. Finally, update the screen ONCE with everything included
-  el.innerHTML = combinedHtml;
-}
 
     function showLoading() {
       document.getElementById('results').innerHTML = `
