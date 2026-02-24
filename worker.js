@@ -13,8 +13,9 @@ export default {
       apiUrl = `https://api.nytimes.com/svc/archive/v1/${year}/${month}.json?api-key=${NYT_KEY}`;
     } else if (source === 'guardian') {
       apiUrl = `https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}`;
-    } } else if (source === 'loc') {
-  apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=${date}&start_date=${date}&searchType=advanced&fo=json`;
+    } 
+  } else if (source === 'loc') {
+  apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=${date}&searchType=advanced&start_date=${date}&fo=json`;
 }
 
     try {
