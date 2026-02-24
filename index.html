@@ -436,16 +436,19 @@
     async function fetchLOC(year, month, day) {
   const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
+  
   const res = await fetch(url);
+  if (!res.ok) throw new Error('LOC request failed');
   const data = await res.json();
   
-  // LOC data is found in .items
+  // FIX: Look for 'items', not 'results'
+  // FIX: Use 'id' for the link and 'city' for the section info
   const articles = (data.items || []).map(a => ({
-    title: a.title || 'Historical Page',
+    title: a.title || 'Historical Newspaper Page',
     url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
-    section: a.city ? a.city.join(', ') : 'Archive',
+    section: a.city ? a.city.join(', ') : 'Archive'
   }));
-  
+
   return { source: 'Chronicling America (LOC)', articles };
 }
 
