@@ -408,14 +408,13 @@
       if (!res.ok) throw new Error('NYT request failed');
       const data = await res.json();
       const dayStr = String(year) + '-' + String(month).padStart(2,'0');
-      const articles = (data.response?.docs || [])
-        .filter(a => a.pub_date?.startsWith(dayStr))
-        .slice(0, 15)
-        .map(a => ({
-          title: a.headline?.main || 'Untitled',
-          url: a.web_url,
-          section: a.section_name || a.news_desk || '',
-        }));
+
+      const articles = (data.results || []).map(a => ({
+  title: a.title || 'Untitled Page',
+  url: a.url || a.id,
+  section: a.partof?.[0]?.title || '',
+}));
+      
       return { source: 'The New York Times', articles };
     }
 
