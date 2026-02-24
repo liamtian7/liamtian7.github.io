@@ -437,7 +437,7 @@
     // Free, no key required. Works best for dates before ~1963.
     async function fetchLOC(year, month, day) {
       const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      const url = `https://chroniclingamerica.loc.gov/search/pages/results/?date1=${dateStr}&date2=${dateStr}&format=json&rows=15`;
+      const url = `https://past.liamtian7.workers.dev/?source=loc&date=${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('LOC request failed');
       const data = await res.json();
