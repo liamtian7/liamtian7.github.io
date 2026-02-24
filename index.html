@@ -381,24 +381,30 @@
     });
 
     async function fetchArticles() {
-      const raw = document.getElementById('dateInput').value;
-      if (!raw) { alert('Please pick a date first.'); return; }
+  const raw = document.getElementById('dateInput').value;
+  if (!raw) { alert('Please pick a date first.'); return; }
 
-      const [year, month, day] = raw.split('-').map(Number);
-      const displayDate = new Date(year, month - 1, day)
-        .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const [year, month, day] = raw.split('-').map(Number);
+  const displayDate = new Date(year, month - 1, day)
+    .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-      document.getElementById('dividerLabel').textContent = displayDate;
-      showLoading();
+  document.getElementById('dividerLabel').textContent = displayDate;
+  showLoading();
 
-      const fetchers = [];
-      if (activeSources.has('nyt'))      fetchers.push(fetchNYT(year, month));
-      if (activeSources.has('guardian')) fetchers.push(fetchGuardian(raw));
-      if (activeSources.has('loc'))      fetchers.push(fetchLOC(year, month, day));
+  const fetchers = [];
+  if (activeSources.has('nyt'))      fetchers.push(fetchNYT(year, month));
+  if (activeSources.has('guardian')) fetchers.push(fetchGuardian(raw));
+  if (activeSources.has('loc'))      fetchers.push(fetchLOC(year, month, day));
 
-      const results = await Promise.allSettled(fetchers);
-      renderResults(results.map(r => r.status === 'fulfilled' ? r.value : null), year, month, day, displayDate);
-    }
+  // 1. Wait for ALL APIs to settle (succeed or fail)
+  const results = await Promise.allSettled(fetchers);
+  
+  // 2. Map the results to their values, or null if they failed
+  const finalData = results.map(r => r.status === 'fulfilled' ? r.value : null);
+  
+  // 3. Call the renderer exactly ONCE with the full array
+  renderResults(finalData, year, month, day, displayDate);
+}
 
     // ── NYT Archive API ──────────────────────────────────────
     // Returns all articles for a given month; we filter to the exact day
