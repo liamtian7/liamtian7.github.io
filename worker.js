@@ -12,10 +12,10 @@ export default {
       const [year, month] = date.split('-');
       apiUrl = `https://api.nytimes.com/svc/archive/v1/${year}/${month}.json?api-key=${NYT_KEY}`;
     } else if (source === 'guardian') {
-      apiUrl = `https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}`;
+      apiUrl = 'https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=1922-12-31&searchType=advanced&start_date=1922-12-01&fo=json';
     } 
   } else if (source === 'loc') {
-  apiUrl = `https://www.loc.gov/collections/chronicling-america/?dl=page&end_date=1922-12-31&searchType=advanced&start_date=1922-12-01&fo=json`;
+  apiUrl = 'https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}';
 }
 
     try {
