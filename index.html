@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Past Papers — Historical News Archive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Libre+Baskerville:ital@0;1&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a1209;
+      --paper: #f5f0e8;
+      --aged: #e8dfc8;
+      --accent: #8b1a1a;
+      --muted: #7a6e5f;
+      --rule: #c8b89a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--paper);
+      background-image:
+        url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      color: var(--ink);
+      font-family: 'Libre Baskerville', Georgia, serif;
+      min-height: 100vh;
+    }
+
+    /* ── MASTHEAD ── */
+    header {
+      border-bottom: 3px double var(--ink);
+      padding: 2rem 2rem 1.2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .kicker {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .rule-line {
+      height: 1px;
+      background: var(--rule);
+      margin: 0.8rem auto 0;
+      width: 60%;
+    }
+
+    /* ── DATE SEARCH ── */
+    .search-section {
+      max-width: 680px;
+      margin: 3rem auto 2rem;
+      padding: 0 2rem;
+      text-align: center;
+    }
+
+    .search-label {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .date-form {
+      display: flex;
+      gap: 0;
+      border: 2px solid var(--ink);
+      overflow: hidden;
+      max-width: 420px;
+      margin: 0 auto;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    .date-form input[type="date"] {
+      flex: 1;
+      border: none;
+      padding: 0.85rem 1rem;
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.95rem;
+      background: white;
+      color: var(--ink);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .date-form button {
+      background: var(--ink);
+      color: var(--paper);
+      border: none;
+      padding: 0.85rem 1.4rem;
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .date-form button:hover { background: var(--accent); }
+
+    .source-pills {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.2rem;
+    }
+
+    .pill {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.75rem;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .pill.active, .pill:hover {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 2rem;
+      color: var(--muted);
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--rule);
+    }
+
+    /* ── RESULTS ── */
+    #results {
+      max-width: 900px;
+      margin: 0 auto 4rem;
+      padding: 0 2rem;
+    }
+
+    .results-date-header {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .source-group {
+      margin-bottom: 2.5rem;
+    }
+
+    .source-name {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .article-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .article-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--aged);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.1s;
+    }
+
+    .article-item:hover { background: rgba(139,26,26,0.04); padding-left: 0.4rem; }
+
+    .article-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    .article-item:hover .article-title { color: var(--accent); }
+
+    .article-section {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── STATES ── */
+    .state-msg {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+
+    .state-msg .big {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.6rem;
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+
+    .state-msg .small {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--rule);
+      border-top-color: var(--ink);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      color: var(--accent);
+      text-align: center;
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.8rem;
+      padding: 2rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 3px double var(--ink);
+      padding: 1.2rem 2rem;
+      text-align: center;
+      font-family: 'Source Code Pro', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    @media (max-width: 500px) {
+      .date-form { flex-direction: column; box-shadow: 3px 3px 0 var(--ink); }
+      .date-form button { padding: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="kicker">pastpapers.liam-tian.com</p>
+    <h1>Past Papers</h1>
+    <p class="subtitle">A window into yesterday's news</p>
+    <div class="rule-line"></div>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <span class="search-label">Enter a date to retrieve articles</span>
+      <div class="date-form">
+        <input type="date" id="dateInput" min="1851-01-01" max="2025-12-31" />
+        <button onclick="fetchArticles()">Search</button>
+      </div>
+      <div class="source-pills">
+        <span class="pill active" data-src="nyt">New York Times</span>
+        <span class="pill active" data-src="guardian">The Guardian</span>
+        <span class="pill active" data-src="loc">Chronicling America</span>
+      </div>
+    </section>
+
+    <div class="divider" id="dividerLabel">Select a date above</div>
+
+    <section id="results">
+      <div class="state-msg">
+        <span class="big">Choose a date</span>
+        <span class="small">Articles from the New York Times, The Guardian,<br>and the Library of Congress will appear here</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Past Papers &mdash; Powered by NYT Archive API &middot; The Guardian Open Platform &middot; Chronicling America (LOC)
+  </footer>
+
+  <script>
+    // ── API KEYS ──────────────────────────────────────────────
+    // Replace these with your real keys before deploying
+    const NYT_API_KEY     = 'YOUR_NYT_API_KEY';
+    const GUARDIAN_API_KEY = 'YOUR_GUARDIAN_API_KEY';
+    // Chronicling America requires no key
+    // ─────────────────────────────────────────────────────────
+
+    // Track which sources are toggled on
+    const activeSources = new Set(['nyt', 'guardian', 'loc']);
+
+    document.querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const src = pill.dataset.src;
+        if (activeSources.has(src)) {
+          activeSources.delete(src);
+          pill.classList.remove('active');
+        } else {
+          activeSources.add(src);
+          pill.classList.add('active');
+        }
+      });
+    });
+
+    // Allow pressing Enter in the date field
+    document.getElementById('dateInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') fetchArticles();
+    });
+
+    async function fetchArticles() {
+      const raw = document.getElementById('dateInput').value;
+      if (!raw) { alert('Please pick a date first.'); return; }
+
+      const [year, month, day] = raw.split('-').map(Number);
+      const displayDate = new Date(year, month - 1, day)
+        .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+      document.getElementById('dividerLabel').textContent = displayDate;
+      showLoading();
+
+      const fetchers = [];
+      if (activeSources.has('nyt'))      fetchers.push(fetchNYT(year, month));
+      if (activeSources.has('guardian')) fetchers.push(fetchGuardian(raw));
+      if (activeSources.has('loc'))      fetchers.push(fetchLOC(year, month, day));
+
+      const results = await Promise.allSettled(fetchers);
+      renderResults(results.map(r => r.status === 'fulfilled' ? r.value : null), year, month, day, displayDate);
+    }
+
+    // ── NYT Archive API ──────────────────────────────────────
+    // Returns all articles for a given month; we filter to the exact day
+    async function fetchNYT(year, month) {
+      const url = `https://api.nytimes.com/svc/archive/v1/${year}/${month}.json?api-key=${NYT_API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('NYT request failed');
+      const data = await res.json();
+      const dayStr = String(year) + '-' + String(month).padStart(2,'0');
+      const articles = (data.response?.docs || [])
+        .filter(a => a.pub_date?.startsWith(dayStr))
+        .slice(0, 15)
+        .map(a => ({
+          title: a.headline?.main || 'Untitled',
+          url: a.web_url,
+          section: a.section_name || a.news_desk || '',
+        }));
+      return { source: 'The New York Times', articles };
+    }
+
+    // ── Guardian API ─────────────────────────────────────────
+    async function fetchGuardian(dateStr) {
+      const url = `https://content.guardianapis.com/search?from-date=${dateStr}&to-date=${dateStr}&page-size=15&api-key=${GUARDIAN_API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Guardian request failed');
+      const data = await res.json();
+      const articles = (data.response?.results || []).map(a => ({
+        title: a.webTitle,
+        url: a.webUrl,
+        section: a.sectionName || '',
+      }));
+      return { source: 'The Guardian', articles };
+    }
+
+    // ── Chronicling America (LOC) ────────────────────────────
+    // Free, no key required. Works best for dates before ~1963.
+    async function fetchLOC(year, month, day) {
+      const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const url = `https://chroniclingamerica.loc.gov/search/pages/results/?date1=${dateStr}&date2=${dateStr}&format=json&rows=15`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('LOC request failed');
+      const data = await res.json();
+      const articles = (data.items || []).map(a => ({
+        title: a.title || 'Untitled Page',
+        url: `https://chroniclingamerica.loc.gov${a.id}`,
+        section: a.place_of_publication?.[0] || '',
+      }));
+      return { source: 'Chronicling America (LOC)', articles };
+    }
+
+    // ── Render ───────────────────────────────────────────────
+    function renderResults(groups, year, month, day, displayDate) {
+      const el = document.getElementById('results');
+      const validGroups = groups.filter(g => g && g.articles.length > 0);
+
+      if (validGroups.length === 0) {
+        el.innerHTML = `
+          <div class="state-msg">
+            <span class="big">No results found</span>
+            <span class="small">Try a different date, or check that your API keys are configured</span>
+          </div>`;
+        return;
+      }
+
+      let html = `<p class="results-date-header">Articles from ${displayDate}</p>`;
+
+      for (const group of validGroups) {
+        html += `
+          <div class="source-group">
+            <p class="source-name">${group.source}</p>
+            <div class="article-list">`;
+        for (const art of group.articles) {
+          html += `
+              <a class="article-item" href="${art.url}" target="_blank" rel="noopener">
+                <span class="article-title">${escHtml(art.title)}</span>
+                <span class="article-section">${escHtml(art.section)}</span>
+              </a>`;
+        }
+        html += `</div></div>`;
+      }
+
+      el.innerHTML = html;
+    }
+
+    function showLoading() {
+      document.getElementById('results').innerHTML = `
+        <div class="state-msg">
+          <div class="spinner"></div>
+          <span class="small">Searching the archives…</span>
+        </div>`;
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
