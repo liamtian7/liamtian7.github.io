@@ -350,33 +350,41 @@
     });
 
     async function fetchArticles() {
-      const raw = document.getElementById('dateInput').value;
-      if (!raw) { alert('Please pick a date first.'); return; }
+  const raw = document.getElementById('dateInput').value;
+  if (!raw) { alert('Please pick a date first.'); return; }
 
-      const [year, month, day] = raw.split('-').map(Number);
-      const displayDate = new Date(year, month - 1, day)
-        .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  // 1. Properly split the date into parts
+  const [year, month, day] = raw.split('-').map(Number);
+  
+  const displayDate = new Date(year, month - 1, day)
+    .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-      document.getElementById('dividerLabel').textContent = displayDate;
-      showLoading();
+  document.getElementById('dividerLabel').textContent = displayDate;
+  showLoading();
 
-      const fetchers = [];
-      const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.src);
+  const fetchers = [];
+  const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.dataset.src);
 
-      if (activePills.includes('nyt'))      fetchers.push(fetchNYT(year, month, raw));
-      if (activePills.includes('guardian')) fetchers.push(fetchGuardian(raw));
-      if (activePills.includes('loc'))      fetchers.push(fetchLOC(raw));
+  // 2. Pass year/month/day individually to ensure LOC gets YYYY-MM-DD
+  if (activePills.includes('nyt'))      fetchers.push(fetchNYT(year, month, raw));
+  if (activePills.includes('guardian')) fetchers.push(fetchGuardian(raw));
+  if (activePills.includes('loc'))      fetchers.push(fetchLOC(year, month, day));
 
-      if (fetchers.length === 0) {
-        document.getElementById('results').innerHTML = `<div class="state-msg"><span class="big">No sources selected</span></div>`;
-        return;
-      }
+  if (fetchers.length === 0) {
+    document.getElementById('results').innerHTML = `
+      <div class="state-msg">
+        <span class="big">No sources selected</span>
+        <span class="small">Click the buttons above to select news sources.</span>
+      </div>`;
+    return;
+  }
 
-      const results = await Promise.allSettled(fetchers);
-      const cleanData = results.map(r => r.status === 'fulfilled' ? r.value : null);
-      
-      renderResults(cleanData, displayDate);
-    }
+  // 3. Wait for all selected sources and render
+  const results = await Promise.allSettled(fetchers);
+  const cleanData = results.map(r => r.status === 'fulfilled' ? r.value : null);
+  
+  renderResults(cleanData, displayDate);
+}
 
     // ── NYT Archive API ──────────────────────────────────────
     async function fetchNYT(year, month, fullDate) {
@@ -409,18 +417,21 @@
     }
 
     // ── Chronicling America (LOC) ────────────────────────────
-    async function fetchLOC(dateStr) {
-      const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      
-      const articles = (data.items || []).map(a => ({
-        title: a.title || 'Historical Page',
-        url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
-        section: a.city ? a.city.join(', ') : 'Archive',
-      }));
-      return { source: 'Chronicling America (LOC)', articles };
-    }
+    async function fetchLOC(year, month, day) {
+  // This ensures the date is ALWAYS YYYY-MM-DD (e.g., 1922-01-01)
+  const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  
+  const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  
+  const articles = (data.items || []).map(a => ({
+    title: a.title || 'Historical Page',
+    url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
+    section: a.city ? a.city.join(', ') : 'Archive',
+  }));
+  return { source: 'Chronicling America (LOC)', articles };
+}
 
     // ── Render Results ───────────────────────────────────────
     function renderResults(groups, displayDate) {
