@@ -434,15 +434,16 @@
     // ── Chronicling America (LOC) ────────────────────────────
     // Free, no key required. Works best for dates before ~1963.
     async function fetchLOC(year, month, day) {
-  const url = `https://past.liamtian7.workers.dev/?source=loc&date=${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const url = `https://past.liamtian7.workers.dev/?source=loc&date=${dateStr}`;
   const res = await fetch(url);
   const data = await res.json();
   
-  // FIX: LOC uses .items
+  // LOC data is found in .items
   const articles = (data.items || []).map(a => ({
-    title: a.title || 'Untitled Page',
-    url: `https://www.loc.gov${a.id}`,
-    section: a.county ? a.county.join(', ') : '',
+    title: a.title || 'Historical Page',
+    url: a.id.startsWith('http') ? a.id : `https://www.loc.gov${a.id}`,
+    section: a.city ? a.city.join(', ') : 'Archive',
   }));
   
   return { source: 'Chronicling America (LOC)', articles };
