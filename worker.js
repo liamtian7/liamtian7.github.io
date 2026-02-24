@@ -14,8 +14,9 @@ export default {
     } else if (source === 'guardian') {
       apiUrl = `https://content.guardianapis.com/search?from-date=${date}&to-date=${date}&page-size=15&api-key=${GUARDIAN_KEY}`;
     } else if (source === 'loc') {
-      apiUrl = `https://chroniclingamerica.loc.gov/search/pages/results/?date1=${date}&date2=${date}&format=json&rows=15`;
-    }
+  const dateFmt = date.replace(/-/g, '');
+  apiUrl = `https://chroniclingamerica.loc.gov/search/pages/results/?date1=${dateFmt}&date2=${dateFmt}&format=json&rows=15`;
+}
 
     const response = await fetch(apiUrl);
     const data = await response.json();
